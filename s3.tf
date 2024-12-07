@@ -6,28 +6,6 @@ resource "aws_s3_bucket" "main" {
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "main" {
-  bucket = aws_s3_bucket.main.bucket
-
-  rule {
-    apply_server_side_encryption_by_default {
-      kms_master_key_id = aws_kms_key.mykey.arn
-      sse_algorithm     = "aws:kms"
-    }
-  }
-}
-
-resource "aws_kms_key" "mykey" {
-  description             = "This key is used to encrypt bucket objects"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
-  rotation_period_in_days = 90
-
-  tags = {
-    name = "Web-Menu-Key"
-  }
-}
-
 resource "aws_s3_bucket_policy" "main" {
   bucket = aws_s3_bucket.main.id
   policy = data.aws_iam_policy_document.restrict-ip.json
@@ -39,8 +17,19 @@ resource "aws_s3_bucket_policy" "main" {
 resource "aws_s3_object" "index" {
   key          = "index.html"
   bucket       = aws_s3_bucket.main.id
-  source       = "website/index.html"
+  source       = "Website/index.html"
   content_type = "text/html"
+
+  tags = {
+    Env = "Web-${terraform.workspace}"
+  }
+}
+
+resource "aws_s3_object" "css" {
+  key          = "styles.css"
+  bucket       = aws_s3_bucket.main.id
+  source       = "Website/styles.css"
+  content_type = "text/css"
 
   tags = {
     Env = "Web-${terraform.workspace}"
